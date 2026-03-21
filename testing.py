@@ -56,34 +56,29 @@ class RotateTester(ft.Container):
         super().__init__()
         self.object = container_to_rotate
         self.breaker = True
-        self.counter = Counter()
-        self.flip_switch = FlipSwitch(
-            label='Rotate',
-            func_true=lambda : self.change_angle(self.counter.num_value),
-            func_false=lambda : self.change_angle(0)
-        )
+        self.divide_factor = 360 * 2
         self.loop_button = ft.Button("Start loop", on_click=self.rotate_loop)
         self.content = ft.Column(controls=
                                  [
                                      container_to_rotate,
-                                     self.flip_switch,
-                                     self.counter,
                                      self.loop_button
                                  ])
 
-
-    def change_angle(self, deg):
-        self.object.rotate.angle = deg
-
     def stop_loop(self):
-
-        #self.change_angle(0)
-        #self.object.animate_rotation = ft.Animation(20, ft.AnimationCurve.DECELERATE)
         self.breaker = False
+
+        self.object.animate_rotation.curve = ft.AnimationCurve.DECELERATE
+
+        while self.object.animate_rotation.duration < 2000:
+            self.object.animate_rotation.duration += 1
+            self.object.rotate.angle += 6.28 / (self.divide_factor / 2)
+
+        print(f'Final pos: {self.object.rotate.angle % 6.28}')
         self.loop_button.content = 'Start loop'
         self.loop_button.on_click = self.rotate_loop
         self.loop_button.color=None
         self.loop_button.update()
+
 
     async def rotate_loop(self):
         self.breaker = True
@@ -91,24 +86,21 @@ class RotateTester(ft.Container):
         self.loop_button.color='red'
         self.loop_button.on_click = self.stop_loop
         self.loop_button.update()
-        loop_bumper = 10000000
-        radian_counter = self.object.rotate.angle + 6.28
+        self.object.animate_rotation.curve = ft.AnimationCurve.EASE_IN
+        self.object.animate_rotation.duration = 12
+        radian_counter = self.object.rotate.angle + (6.28 / self.divide_factor)
         while self.breaker:
-            #self.counter.increment(e=None)
-            if self.counter.num_value > loop_bumper:
-                self.counter.num_value = 300
-                #loop_bumper = random.randint(700, 1200)
             self.object.rotate.angle = radian_counter
-            #self.object.animate_rotation = ft.Animation(loop_bumper - 250, ft.AnimationCurve.DECELERATE)
             self.object.update()
-            radian_counter += 6.28
-            await asyncio.sleep(self.object.animate_rotation.duration/1000)
+            radian_counter += (6.28 / self.divide_factor)
+            print(self.object.rotate.angle)
+            await asyncio.sleep((self.object.animate_rotation.duration/1000) / self.divide_factor)
 
 
 
 def main(page: ft.Page):
 
-    box = ft.Container(content=ft.Text("hello world", size=40), rotate=ft.Rotate(angle=0, alignment=ft.Alignment.CENTER), animate_rotation=ft.Animation(210, ft.AnimationCurve.DECELERATE))
+    box = ft.Container(content=ft.Text("hello world", size=40), rotate=ft.Rotate(angle=0, alignment=ft.Alignment.CENTER), animate_rotation=ft.Animation(2100, ft.AnimationCurve.DECELERATE))
 
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
