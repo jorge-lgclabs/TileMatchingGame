@@ -1,7 +1,8 @@
 import random
 import asyncio
-
+from PIL import Image
 import flet as ft
+from PIL.ImageChops import offset
 
 CELL_SIZE = 4
 RECTANGLE_WIDTH = CELL_SIZE * 4
@@ -70,7 +71,7 @@ class RotateTester(ft.Container):
         self.object.animate_rotation.curve = ft.AnimationCurve.DECELERATE
 
         while self.object.animate_rotation.duration < 2000:
-            self.object.animate_rotation.duration += 1
+            self.object.animate_rotation.duration += 4
             self.object.rotate.angle += 6.28 / (self.divide_factor / 2)
 
         print(f'Final pos: {self.object.rotate.angle % 6.28}')
@@ -87,7 +88,7 @@ class RotateTester(ft.Container):
         self.loop_button.on_click = self.stop_loop
         self.loop_button.update()
         self.object.animate_rotation.curve = ft.AnimationCurve.EASE_IN
-        self.object.animate_rotation.duration = 12
+        self.object.animate_rotation.duration = 1
         radian_counter = self.object.rotate.angle + (6.28 / self.divide_factor)
         while self.breaker:
             self.object.rotate.angle = radian_counter
@@ -96,18 +97,46 @@ class RotateTester(ft.Container):
             print(self.object.rotate.angle)
             await asyncio.sleep((self.object.animate_rotation.duration/1000) / self.divide_factor)
 
+class TileRevealer(ft.Container):
+    def __init__(self, image_to_reveal):
+        super().__init__()
+        self.image_obj = image_to_reveal
+        self.width = self.image_obj.width
+        self.height = self.image_obj.height
 
+        self.alignment = ft.Alignment.CENTER
+        self.door = ft.Container(
+            width=self.width, height=self.height, bgcolor='green',
+            offset = ft.Offset(0,0),
+            animate_offset = ft.Animation(
+                duration=700,
+                curve=ft.AnimationCurve.EASE_IN
+            ),
+            on_click=self.animate)
+
+
+        self.content = self.door
+
+    def animate(self, e):
+        self.door.offset = ft.Offset(-1,0)
 
 def main(page: ft.Page):
 
     box = ft.Container(content=ft.Text("hello world", size=40), rotate=ft.Rotate(angle=0, alignment=ft.Alignment.CENTER), animate_rotation=ft.Animation(2100, ft.AnimationCurve.DECELERATE))
 
+    # img = Image.open('assets/tmpv7rnyd_z.jpeg')
+    # new_img = img.crop((20,0,148,128))
+
+    orig_width, orig_height = Image.open('assets/test_icon.png').size
+    image = ft.Image('assets/test_icon.png', width=orig_width, height=orig_height)
+    container_test = ft.Container(content=image, width=orig_width, height=orig_height)
+
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.add(ft.Column(controls=[
-        RotateTester(container_to_rotate=box)
-    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER))
+        TileRevealer(image)
+    ], alignment = ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER))
 
 
 ft.run(main, assets_dir='assets')
