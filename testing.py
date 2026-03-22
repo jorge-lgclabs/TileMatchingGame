@@ -103,22 +103,29 @@ class TileRevealer(ft.Container):
         self.image_obj = image_to_reveal
         self.width = self.image_obj.width
         self.height = self.image_obj.height
-
+        self.clip_behavior = ft.ClipBehavior.ANTI_ALIAS
+        self.border_radius = 5
         self.alignment = ft.Alignment.CENTER
         self.door = ft.Container(
-            width=self.width, height=self.height, bgcolor='green',
+            width=self.width, height=self.height,
+            image=ft.DecorationImage(src='door.jpg'),
             offset = ft.Offset(0,0),
             animate_offset = ft.Animation(
                 duration=700,
                 curve=ft.AnimationCurve.EASE_IN
             ),
-            on_click=self.animate)
+            on_click = self.start_reveal
+        )
 
+        self.content = ft.Stack([self.image_obj, self.door])
 
-        self.content = self.door
+    async def start_reveal(self):
+        self.door.offset = ft.Offset(0,-1)
+        self.door.update()
+        await asyncio.sleep(3)
+        self.door.offset = ft.Offset(0,0)
+        self.door.update()
 
-    def animate(self, e):
-        self.door.offset = ft.Offset(-1,0)
 
 def main(page: ft.Page):
 
@@ -128,7 +135,7 @@ def main(page: ft.Page):
     # new_img = img.crop((20,0,148,128))
 
     orig_width, orig_height = Image.open('assets/test_icon.png').size
-    image = ft.Image('assets/test_icon.png', width=orig_width, height=orig_height)
+    image = ft.Image('test_icon.png', width=orig_width, height=orig_height)
     container_test = ft.Container(content=image, width=orig_width, height=orig_height)
 
     page.theme_mode = ft.ThemeMode.DARK
