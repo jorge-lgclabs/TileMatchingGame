@@ -104,9 +104,10 @@ class TileRevealer(ft.Container):
         self.width = self.image_obj.width
         self.height = self.image_obj.height
         self.clip_behavior = ft.ClipBehavior.ANTI_ALIAS
-        self.border_radius = 5
+        self.border_radius = 10
         self.alignment = ft.Alignment.CENTER
         self.door = ft.Container(
+            border_radius = 5,
             width=self.width, height=self.height,
             image=ft.DecorationImage(src='door.jpg'),
             offset = ft.Offset(0,0),
@@ -120,7 +121,7 @@ class TileRevealer(ft.Container):
         self.content = ft.Stack([self.image_obj, self.door])
 
     async def start_reveal(self):
-        self.door.offset = ft.Offset(0,-1)
+        self.door.offset = ft.Offset(0,-1.1)
         self.door.update()
         await asyncio.sleep(3)
         self.door.offset = ft.Offset(0,0)
@@ -133,16 +134,25 @@ def main(page: ft.Page):
 
     # img = Image.open('assets/tmpv7rnyd_z.jpeg')
     # new_img = img.crop((20,0,148,128))
+    #orig_width, orig_height = Image.open('assets/test_icon.png').size
 
-    orig_width, orig_height = Image.open('assets/test_icon.png').size
-    image = ft.Image('test_icon.png', width=orig_width, height=orig_height)
-    container_test = ft.Container(content=image, width=orig_width, height=orig_height)
+    target_width = target_height = 85
+
+    image_reveals = []
+    for _ in range(36):
+        image = ft.Image('test_icon.png', width=target_width, height=target_height)
+        image_reveals.append(TileRevealer(image))
+
+    grid = ft.GridView(controls=image_reveals,
+                       width=(target_width*6) + 65,
+                       runs_count = 6,
+                       spacing=25)
 
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.add(ft.Column(controls=[
-        TileRevealer(image)
+        grid
     ], alignment = ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER))
 
 
