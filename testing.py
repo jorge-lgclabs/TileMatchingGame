@@ -147,6 +147,7 @@ class TileGame(ft.Container):
         self.define_handlers()
         self.click_1_cache = None
         self.click_1_close_func = None
+        self.click_2_cache = None
         self.master_grid.controls = self.tiles
         self.content = self.master_grid
 
@@ -157,11 +158,12 @@ class TileGame(ft.Container):
     async def click_handler(self, e):
         open_func, close_func, src_str = e.control.data
 
-        if self.click_1_cache is None: # this is the first tile revealed
+        if self.click_1_cache is None:                                      # this is the first tile revealed
             await open_func()
             self.click_1_close_func = close_func
             self.click_1_cache = src_str
-        else:                         # this is the second tile revealed
+        elif self.click_1_cache is not None and self.click_2_cache is None: # this is the second tile revealed
+            self.click_2_cache = src_str
             await open_func()
             await asyncio.sleep(1.5)
             if self.click_1_cache == src_str:
@@ -171,6 +173,9 @@ class TileGame(ft.Container):
                 await self.click_1_close_func()
             self.click_1_cache = None
             self.click_1_close_func = None
+            self.click_2_cache = None
+        else:
+            return
 
 
 def main(page: ft.Page):
