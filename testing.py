@@ -216,7 +216,7 @@ class TileGame(ft.Container):
 
     async def win_screen(self):
         win_screen = ft.Container(width=self.grid_width, height = self.target_width * 3,
-                                  bgcolor=ft.Colors.with_opacity(.72, ft.Colors.GREY_700), border_radius=self.target_width,
+                                  bgcolor=ft.Colors.with_opacity(.7, ft.Colors.GREY_700), border_radius=self.target_width,
                                   animate_opacity=ft.Animation(800, ft.AnimationCurve.EASE_IN), opacity=0,
                                   alignment=ft.Alignment.CENTER)
         win_text = ft.Text('You win!', text_align=ft.TextAlign.CENTER, size=self.target_width)
