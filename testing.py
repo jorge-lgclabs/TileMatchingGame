@@ -166,8 +166,8 @@ class TileGame(ft.Container):
             runs_count = 6,
             spacing=25)
 
-        self.click_count = TextCounter(size=self.target_width * 5)
-        self.match_count = TextCounter(size=self.target_width * 5)
+        self.click_count = TextCounter(size=self.target_width * .5)
+        self.match_count = TextCounter(size=self.target_width * .5)
 
         self.text_row = ft.Row(width=self.grid_width, alignment=ft.MainAxisAlignment.SPACE_AROUND, controls=[
             ft.Container(self.click_count, width=self.target_width, alignment=ft.Alignment.CENTER),
