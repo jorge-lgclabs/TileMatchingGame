@@ -1,9 +1,8 @@
 import random
 import asyncio
-from PIL import Image
+
 import flet as ft
-from PIL.ImageChops import offset
-from flet.controls.border_radius import horizontal
+
 
 CELL_SIZE = 4
 RECTANGLE_WIDTH = CELL_SIZE * 4
