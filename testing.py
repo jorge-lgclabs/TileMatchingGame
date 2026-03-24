@@ -130,14 +130,48 @@ class TileRevealer(ft.Container):
         self.door.offset = ft.Offset(0, 0)
         self.door.update()
 
+class TextCounter(ft.Text):
+    def __init__(self, size):
+        super().__init__()
+        self.size = size
+        self.count = 0
+        self.animate_opacity = ft.Animation(500, ft.AnimationCurve.EASE_IN_EXPO)
+        self.value = str(self.count)
+
+    async def increment(self):
+        self.count += 1
+        self.opacity = 0
+        self.update()
+        await asyncio.sleep(.5)
+        self.value = str(self.count)
+        self.opacity = 1
+        self.update()
+
+    async def decrement(self):
+        self.count -= 1
+        self.value = str(self.count)
+        self.update()
+
+
 class TileGame(ft.Container):
     def __init__(self):
         super().__init__()
         self.target_width = self.target_height = 85
+        self.grid_width = (self.target_width * 6) + 65
+        self.width = self.grid_width
         self.master_grid = ft.GridView(
-            width=(self.target_width*6) + 65,
+            width=self.grid_width,
             runs_count = 6,
             spacing=25)
+
+        self.click_count = TextCounter(size=self.target_width)
+        self.match_count = TextCounter(size=self.target_width)
+
+        self.text_row = ft.Row(width=self.grid_width, alignment=ft.MainAxisAlignment.SPACE_AROUND, controls=[
+            ft.Container(self.click_count, width=self.target_width, alignment=ft.Alignment.CENTER),
+            ft.Container(self.match_count, width=self.target_width, alignment=ft.Alignment.CENTER)
+        ])
+
 
         self.icon_numbers = random.sample(range(0,63), 18)
         self.icon_images = [ft.Image(f'/test_icon_set/icon{num}.png', width=self.target_width, height=self.target_height) for num in self.icon_numbers for _ in range(2)]
@@ -146,10 +180,9 @@ class TileGame(ft.Container):
         self.tiles = [TileRevealer(image) for image in self.icon_images]
         self.define_handlers()
         self.click_1_cache = None
-        self.click_1_close_func = None
         self.click_2_cache = None
         self.master_grid.controls = self.tiles
-        self.content = self.master_grid
+        self.content = ft.Column([self.text_row, self.master_grid])
 
     def define_handlers(self):
         for tile in self.tiles:
@@ -160,45 +193,41 @@ class TileGame(ft.Container):
 
         if self.click_1_cache is None:                                      # this is the first tile revealed
             await open_func()
-            self.click_1_close_func = close_func
-            self.click_1_cache = src_str
-        elif self.click_1_cache is not None and self.click_2_cache is None: # this is the second tile revealed
-            self.click_2_cache = src_str
+            self.click_1_cache = e.control
+        elif (self.click_1_cache is not None) and (self.click_1_cache != e.control)  and (self.click_2_cache is None): # this is the second tile revealed
+            self.click_2_cache = e.control
             await open_func()
-            await asyncio.sleep(1.5)
-            if self.click_1_cache == src_str:
-                print('match found')
+            await asyncio.sleep(1)
+            if self.click_1_cache.data[2] == src_str:
+                await self.special_increment()
             else:
+                await asyncio.sleep(.5)
                 await close_func()
-                await self.click_1_close_func()
+                await self.click_1_cache.data[1]()
+                await self.click_count.increment()
             self.click_1_cache = None
-            self.click_1_close_func = None
             self.click_2_cache = None
         else:
             return
+
+    async def special_increment(self):
+        self.click_count.count += 1
+        self.match_count.count += 1
+        self.click_count.opacity = 0
+        self.match_count.opacity = 0
+        self.text_row.update()
+        await asyncio.sleep(.5)
+        self.click_count.value = str(self.click_count.count)
+        self.match_count.value = str(self.match_count.count)
+        self.click_count.opacity = 1
+        self.match_count.opacity = 1
+        self.text_row.update()
 
 
 def main(page: ft.Page):
 
     box = ft.Container(content=ft.Text("hello world", size=40), rotate=ft.Rotate(angle=0, alignment=ft.Alignment.CENTER), animate_rotation=ft.Animation(2100, ft.AnimationCurve.DECELERATE))
 
-    # img = Image.open('assets/tmpv7rnyd_z.jpeg')
-    # new_img = img.crop((20,0,148,128))
-    #orig_width, orig_height = Image.open('assets/test_icon.png').size
-
-    # target_width = target_height = 85
-    #
-    # image_reveals = []
-    # for _ in range(36):
-    #     icon_num = random.randint(0, 63)
-    #     image = ft.Image(f'/test_icon_set/icon{icon_num}.png', width=target_width, height=target_height)
-    #     print(image.src)
-    #     image_reveals.append(TileRevealer(image))
-    #
-    # grid = ft.GridView(controls=image_reveals,
-    #                    width=(target_width*6) + 65,
-    #                    runs_count = 6,
-    #                    spacing=25)
 
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
