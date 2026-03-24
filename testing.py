@@ -3,6 +3,7 @@ import asyncio
 from PIL import Image
 import flet as ft
 from PIL.ImageChops import offset
+from flet.controls.border_radius import horizontal
 
 CELL_SIZE = 4
 RECTANGLE_WIDTH = CELL_SIZE * 4
@@ -156,6 +157,7 @@ class TextCounter(ft.Text):
 class TileGame(ft.Container):
     def __init__(self):
         super().__init__()
+
         self.target_width = self.target_height = 85
         self.grid_width = (self.target_width * 6) + 65
         self.width = self.grid_width
@@ -168,10 +170,9 @@ class TileGame(ft.Container):
         self.match_count = TextCounter(size=self.target_width)
 
         self.text_row = ft.Row(width=self.grid_width, alignment=ft.MainAxisAlignment.SPACE_AROUND, controls=[
-            ft.Container(self.click_count, width=self.target_width, alignment=ft.Alignment.CENTER),
-            ft.Container(self.match_count, width=self.target_width, alignment=ft.Alignment.CENTER)
+            ft.Container(self.click_count, width=self.target_width * 2, alignment=ft.Alignment.CENTER),
+            ft.Container(self.match_count, width=self.target_width * 2, alignment=ft.Alignment.CENTER)
         ])
-
 
         self.icon_numbers = random.sample(range(0,63), 18)
         self.icon_images = [ft.Image(f'/test_icon_set/icon{num}.png', width=self.target_width, height=self.target_height) for num in self.icon_numbers for _ in range(2)]
@@ -200,6 +201,9 @@ class TileGame(ft.Container):
             await asyncio.sleep(1)
             if self.click_1_cache.data[2] == src_str:
                 await self.special_increment()
+                if self.match_count.count == 18:
+                    await asyncio.sleep(.5)
+                    await self.win_screen()
             else:
                 await asyncio.sleep(.5)
                 await close_func()
@@ -209,6 +213,31 @@ class TileGame(ft.Container):
             self.click_2_cache = None
         else:
             return
+
+    async def win_screen(self):
+        win_screen = ft.Container(width=self.grid_width, height = self.target_width * 3,
+                                  bgcolor=ft.Colors.with_opacity(.7, ft.Colors.GREY_700), border_radius=self.target_width,
+                                  animate_opacity=ft.Animation(800, ft.AnimationCurve.EASE_IN), opacity=0,
+                                  alignment=ft.Alignment.CENTER)
+        win_text = ft.Text('You win!', text_align=ft.TextAlign.CENTER, size=self.target_width)
+        play_again_button = ft.Button('Play again', color='blue', on_click=self.reload_game)
+
+        win_screen.content=ft.Column(horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                     alignment=ft.MainAxisAlignment.CENTER, controls=[
+                                        win_text, play_again_button
+                                        ])
+
+        full_page_container = ft.Container(alignment=ft.Alignment.CENTER, content=win_screen, width=self.page.width,
+                                           height=self.page.height)
+        self.page.overlay.append(full_page_container)
+        self.page.update()
+        win_screen.opacity = 1
+        self.page.update()
+
+    async def reload_game(self):
+        self.page.controls.clear()
+        self.page.overlay.clear()
+        self.page.add(TileGame())
 
     async def special_increment(self):
         self.click_count.count += 1
