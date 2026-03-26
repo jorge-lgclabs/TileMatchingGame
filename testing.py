@@ -188,7 +188,7 @@ class TileGame(ft.Container):
 
     def get_file_count(self):
         count = 0
-        with os.scandir(f'tiles_{self.set_num}') as entries:
+        with os.scandir(f'tiles_{self.set_num}') as entries: # not sure
             for entry in entries:
                 if entry.is_file():
                     count += 1
