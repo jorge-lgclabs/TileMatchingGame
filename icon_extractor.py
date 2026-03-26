@@ -1,4 +1,5 @@
 # A tool for taking a sheet of icons and extracting them to separate files
+import os
 from math import floor
 
 from PIL import Image
@@ -20,6 +21,8 @@ def extract_icons(icon_sheet_path, set_num, threshold):
     bottom_pixel_row = 1
 
     count = 0
+
+    os.makedirs(f'assets/tiles_{set_num}', exist_ok=True)
 
     while bottom_pixel_row < len(white_mask)-1:
         print(f'{bottom_pixel_row=}, {len(white_mask)=}')
@@ -145,4 +148,4 @@ def slice_icons(icon_sheet_path, row_begin, row_size, column_begin, column_size,
 
 
 #slice_icons(icon_sheet_path='assets/servo386_httpss.mj.runwjtgaTbSie0_httpss.mj.run6XyyZMmUbJk_http_ff688dae-4254-4c06-8d75-c20981017abd.png', row_begin=16, row_size=222, column_begin=52, column_size=222, column_gap=44)
-extract_icons(icon_sheet_path='assets/servo386_httpss.mj.runwjtgaTbSie0_httpss.mj.run6XyyZMmUbJk_http_ff688dae-4254-4c06-8d75-c20981017abd.png', set_num=1, threshold=200)
+extract_icons(icon_sheet_path='assets/servo386_httpss.mj.run6gGiMUVG-Zg_httpss.mj.runviCSsA9KreY_http_10a5ce3a-5c55-47cd-91f3-caac76527416.png', set_num=2, threshold=200)
