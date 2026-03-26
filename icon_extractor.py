@@ -1,18 +1,16 @@
 # A tool for taking a sheet of icons and extracting them to separate files
+from math import floor
 
 from PIL import Image
 import numpy as np
 from scipy import ndimage
 
-def extract_icons(icon_sheet_path, output_size, threshold):
+def extract_icons(icon_sheet_path, set_num, threshold):
     img = Image.open(icon_sheet_path).convert('RGBA')
     data = np.array(img)
 
     # Create mask: non-white pixels
     white_mask = (data[:, :, 0] > threshold) & (data[:, :, 1] > threshold) & (data[:, :, 2] > threshold)
-
-    #visible_mask = Image.fromarray((~white_mask * 255).astype(np.uint8))
-    #visible_mask.show()
 
     column_coords = []
     row_coords = []
@@ -21,7 +19,10 @@ def extract_icons(icon_sheet_path, output_size, threshold):
 
     bottom_pixel_row = 1
 
-    while bottom_pixel_row < len(white_mask):
+    count = 0
+
+    while bottom_pixel_row < len(white_mask)-1:
+        print(f'{bottom_pixel_row=}, {len(white_mask)=}')
         old_top = top_pixel_row
         left_most_pixel_column = 0
         right_most_pixel_column = 1
@@ -47,7 +48,6 @@ def extract_icons(icon_sheet_path, output_size, threshold):
                 break
 
         #input(f'{top_pixel_row=}, {bottom_pixel_row=}')
-
 
         while right_most_pixel_column < len(white_mask[0]):
             old_left = left_most_pixel_column
@@ -75,59 +75,46 @@ def extract_icons(icon_sheet_path, output_size, threshold):
             if left_most_pixel_column == right_most_pixel_column:
                 break
 
-            #input(f'{top_pixel_row=}, {bottom_pixel_row=}, {left_most_pixel_column=}, {right_most_pixel_column=}')
-            img.crop((left_most_pixel_column, top_pixel_row, right_most_pixel_column, bottom_pixel_row)).show()
+            height = bottom_pixel_row - top_pixel_row
+            width = right_most_pixel_column - left_most_pixel_column
 
+            if height > width:
+                difference = height - width
+                small_half = difference // 2
+
+                height_pad = small_half
+                height_1 = small_half // 2
+                height_2 = height_pad - height_1
+
+                width_pad = (height + height_pad) - width
+                width_1 = width_pad // 2
+                width_2 = width_pad - width_1
+
+            elif width > height:
+                difference = width - height
+                small_half = difference // 2
+
+                width_pad = small_half
+                width_1 = small_half // 2
+                width_2 = width_pad - width_1
+
+                height_pad = (width + width_pad) - height
+                height_1 = height_pad // 2
+                height_2 = height_pad - height_1
+            else:
+                width_1 = width_2 = height_1 = height_2 = 0
+
+            padding = ((height_1, height_2), (width_1, width_2), (0,0))
+            cropped_icon = data[top_pixel_row:bottom_pixel_row, left_most_pixel_column:right_most_pixel_column].copy()
+            padded_icon = np.pad(cropped_icon, pad_width=padding, mode='constant', constant_values=255)
+
+            Image.fromarray(padded_icon).save(f'assets/tiles_{set_num}/icon{count}.png')
+            count += 1
             left_most_pixel_column = right_most_pixel_column + 1
 
         top_pixel_row = bottom_pixel_row + 1
 
-    # for index in range(len(white_mask[top_pixel_row])):
-    #     white_mask[top_pixel_row][index] = False
     #
-    # for index in range(len(white_mask)):
-    #     white_mask[index][left_most_pixel_column] = False
-    #
-    # visible_mask = Image.fromarray((~white_mask * 255).astype(np.uint8))
-    # visible_mask.show()
-
-    input('stop')
-
-
-    for row in range(50):
-        for index in range(len(white_mask[row])):
-            if white_mask[row][index] is False:
-                print(row, index)
-                input('first top pixel')
-
-
-
-    # # Invert: icons are non-white
-    # from scipy import ndimage
-    # labeled, num_features = ndimage.label(~white_mask)
-    #
-    # icons = []
-    # for i in range(1, num_features + 1):
-    #     # Get bounding box of each connected component
-    #     rows, cols = np.where(labeled == i)
-    #     if len(rows) == 0:
-    #         continue
-    #
-    #     min_row, max_row = rows.min(), rows.max()
-    #     min_col, max_col = cols.min(), cols.max()
-    #
-    #     # Crop
-    #     crop = img.crop((min_col, min_row, max_col + 1, max_row + 1))
-    #
-    #     # Center in square
-    #     square = Image.new('RGBA', (output_size, output_size), (255, 255, 255, 0))
-    #     # Paste centered...
-    #
-    #     square.show()
-    #
-    #     input('stop here')
-    #
-    #     icons.append(square)
 
 def slice_icons(icon_sheet_path, row_begin, row_size, column_begin, column_size, column_gap):
     img = Image.open(icon_sheet_path)
@@ -157,6 +144,5 @@ def slice_icons(icon_sheet_path, row_begin, row_size, column_begin, column_size,
 
 
 
-
 #slice_icons(icon_sheet_path='assets/servo386_httpss.mj.runwjtgaTbSie0_httpss.mj.run6XyyZMmUbJk_http_ff688dae-4254-4c06-8d75-c20981017abd.png', row_begin=16, row_size=222, column_begin=52, column_size=222, column_gap=44)
-extract_icons(icon_sheet_path='assets/servo386_httpss.mj.runwjtgaTbSie0_httpss.mj.run6XyyZMmUbJk_http_ff688dae-4254-4c06-8d75-c20981017abd.png', output_size=128, threshold=200)
+extract_icons(icon_sheet_path='assets/servo386_httpss.mj.runwjtgaTbSie0_httpss.mj.run6XyyZMmUbJk_http_ff688dae-4254-4c06-8d75-c20981017abd.png', set_num=1, threshold=200)

@@ -154,7 +154,7 @@ class TextCounter(ft.Text):
 
 
 class TileGame(ft.Container):
-    def __init__(self):
+    def __init__(self, set_num, tiles_num):
         super().__init__()
 
         self.target_width = self.target_height = 85
@@ -173,8 +173,8 @@ class TileGame(ft.Container):
             ft.Container(self.match_count, width=self.target_width, alignment=ft.Alignment.CENTER)
         ])
 
-        self.icon_numbers = random.sample(range(0,63), 18)
-        self.icon_images = [ft.Image(f'/test_icon_set/icon{num}.png', width=self.target_width, height=self.target_height) for num in self.icon_numbers for _ in range(2)]
+        self.icon_numbers = random.sample(range(0,tiles_num), 18)
+        self.icon_images = [ft.Image(f'/tiles_{set_num}/icon{num}.png', width=self.target_width, height=self.target_height) for num in self.icon_numbers for _ in range(2)]
         for _ in range(5):
             random.shuffle(self.icon_images)
         self.tiles = [TileRevealer(image) for image in self.icon_images]
@@ -261,7 +261,7 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.add(ft.Column(controls=[
-        TileGame()
+        TileGame(set_num=1, tiles_num=64)
     ], alignment = ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER))
 
 
