@@ -261,7 +261,7 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.add(ft.Column(controls=[
-        TileGame(set_num=2, tiles_num=64)
+        TileGame(set_num=1, tiles_num=64)
     ], alignment = ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER))
 
 
