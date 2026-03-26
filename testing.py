@@ -1,3 +1,4 @@
+import os
 import random
 import asyncio
 
@@ -154,9 +155,10 @@ class TextCounter(ft.Text):
 
 
 class TileGame(ft.Container):
-    def __init__(self, set_num, tiles_num):
+    def __init__(self):
         super().__init__()
-
+        self.set_num = self.get_random_set()
+        self.tiles_num = self.get_file_count()
         self.target_width = self.target_height = 85
         self.grid_width = (self.target_width * 6) + 65
         self.width = self.grid_width
@@ -173,8 +175,8 @@ class TileGame(ft.Container):
             ft.Container(self.match_count, width=self.target_width, alignment=ft.Alignment.CENTER)
         ])
 
-        self.icon_numbers = random.sample(range(0,tiles_num), 18)
-        self.icon_images = [ft.Image(f'/tiles_{set_num}/icon{num}.png', width=self.target_width, height=self.target_height) for num in self.icon_numbers for _ in range(2)]
+        self.icon_numbers = random.sample(range(0,self.tiles_num), 18)
+        self.icon_images = [ft.Image(f'/tiles_{self.set_num}/icon{num}.png', width=self.target_width, height=self.target_height) for num in self.icon_numbers for _ in range(2)]
         for _ in range(5):
             random.shuffle(self.icon_images)
         self.tiles = [TileRevealer(image) for image in self.icon_images]
@@ -184,9 +186,20 @@ class TileGame(ft.Container):
         self.master_grid.controls = self.tiles
         self.content = ft.Column([self.text_row, self.master_grid])
 
+    def get_file_count(self):
+        count = 0
+        with os.scandir(f'assets/tiles_{self.set_num}') as entries:
+            for entry in entries:
+                if entry.is_file():
+                    count += 1
+        return count - 1
+
     def define_handlers(self):
         for tile in self.tiles:
             tile.door.on_click = self.click_handler
+
+    def get_random_set(self):
+        return random.randint(1, 3)
 
     async def click_handler(self, e):
         open_func, close_func, src_str = e.control.data
@@ -261,7 +274,7 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.add(ft.Column(controls=[
-        TileGame(set_num=1, tiles_num=64)
+        TileGame()
     ], alignment = ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER))
 
 
