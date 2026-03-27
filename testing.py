@@ -156,7 +156,8 @@ class TextCounter(ft.Text):
 class TileGame(ft.Container):
     def __init__(self, set_num, tiles_num):
         super().__init__()
-
+        self.set_num = set_num
+        self.tiles_num = tiles_num
         self.target_width = self.target_height = 85
         self.grid_width = (self.target_width * 6) + 65
         self.width = self.grid_width
@@ -236,7 +237,7 @@ class TileGame(ft.Container):
     async def reload_game(self):
         self.page.controls.clear()
         self.page.overlay.clear()
-        self.page.add(TileGame())
+        self.page.add(TileGame(self.set_num, self.tiles_num))
 
     async def special_increment(self):
         self.click_count.count += 1
