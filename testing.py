@@ -237,7 +237,7 @@ class TileGame(ft.Container):
     async def reload_game(self):
         self.page.controls.clear()
         self.page.overlay.clear()
-        self.page.add(TileGame(self.set_num, self.tiles_num))
+        self.page.add(TileGame(self.set_num, self.tiles_num)) #reload game
 
     async def special_increment(self):
         self.click_count.count += 1
