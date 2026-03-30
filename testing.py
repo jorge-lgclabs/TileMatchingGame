@@ -253,6 +253,8 @@ class TileGame(ft.Container):
         self.text_row.update()
 
     def set_randomizer(self):
+        print(os.listdir())
+
         cwd = os.getcwd()
 
         dir_numbers = []
