@@ -253,15 +253,17 @@ class TileGame(ft.Container):
         self.text_row.update()
 
     def set_randomizer(self):
+        cwd = os.getcwd()
+
         dir_numbers = []
-        with os.scandir('assets') as dir:
+        with os.scandir(f'{cwd}/assets') as dir:
             for entry in dir:
                 if 'tiles_' in entry.name:
                     dir_numbers.append(int(entry.name.strip('tiles_')))
 
         set_num = random.sample(dir_numbers, 1)[0]
 
-        with os.scandir(f'assets/tiles_{set_num}') as tile_dir:
+        with os.scandir(f'{cwd}/assets/tiles_{set_num}') as tile_dir:
             for count, entry in enumerate(tile_dir):
                 tile_num = count
 
