@@ -1,7 +1,7 @@
 import os
 import random
 import asyncio
-
+from pathlib import Path
 import flet as ft
 
 
@@ -155,8 +155,9 @@ class TextCounter(ft.Text):
 
 
 class TileGame(ft.Container):
-    def __init__(self):
+    def __init__(self, assets_dir):
         super().__init__()
+        self.assets_dir = assets_dir
         self.set_num, self.tiles_num = self.set_randomizer()
         self.target_width = self.target_height = 85
         self.grid_width = (self.target_width * 6) + 65
@@ -253,23 +254,26 @@ class TileGame(ft.Container):
         self.text_row.update()
 
     def set_randomizer(self):
-        print(os.listdir())
-
-        cwd = os.getcwd()
+        print(self.assets_dir)
 
         dir_numbers = []
-        with os.scandir(f'{cwd}/assets') as dir:
+        with os.scandir(self.assets_dir) as dir:
             for entry in dir:
                 if 'tiles_' in entry.name:
                     dir_numbers.append(int(entry.name.strip('tiles_')))
 
         set_num = random.sample(dir_numbers, 1)[0]
 
-        with os.scandir(f'{cwd}/assets/tiles_{set_num}') as tile_dir:
+        with os.scandir(self.assets_dir / f'tiles_{set_num}') as tile_dir:
             for count, entry in enumerate(tile_dir):
                 tile_num = count
 
         return set_num, tile_num
+
+
+def get_assets_dir() -> Path:
+    default_assets_dir = Path(__file__).parent / "assets"  # fallback for local runs
+    return Path(os.environ.get("FLET_ASSETS_DIR", str(default_assets_dir))).resolve()
 
 def main(page: ft.Page):
 
@@ -280,7 +284,7 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.add(ft.Column(controls=[
-        TileGame()
+        TileGame(assets_dir=get_assets_dir())
     ], alignment = ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER))
 
 
