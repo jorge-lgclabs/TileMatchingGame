@@ -1,3 +1,4 @@
+import os
 import random
 import asyncio
 
@@ -154,10 +155,9 @@ class TextCounter(ft.Text):
 
 
 class TileGame(ft.Container):
-    def __init__(self, set_num, tiles_num):
+    def __init__(self):
         super().__init__()
-        self.set_num = set_num
-        self.tiles_num = tiles_num
+        self.set_num, self.tiles_num = self.set_randomizer()
         self.target_width = self.target_height = 85
         self.grid_width = (self.target_width * 6) + 65
         self.width = self.grid_width
@@ -174,8 +174,8 @@ class TileGame(ft.Container):
             ft.Container(self.match_count, width=self.target_width, alignment=ft.Alignment.CENTER)
         ])
 
-        self.icon_numbers = random.sample(range(0,tiles_num), 18)
-        self.icon_images = [ft.Image(f'/tiles_{set_num}/icon{num}.png', width=self.target_width, height=self.target_height) for num in self.icon_numbers for _ in range(2)]
+        self.icon_numbers = random.sample(range(0,self.tiles_num), 18)
+        self.icon_images = [ft.Image(f'/tiles_{self.set_num}/icon{num}.png', width=self.target_width, height=self.target_height) for num in self.icon_numbers for _ in range(2)]
         for _ in range(5):
             random.shuffle(self.icon_images)
         self.tiles = [TileRevealer(image) for image in self.icon_images]
@@ -237,7 +237,7 @@ class TileGame(ft.Container):
     async def reload_game(self):
         self.page.controls.clear()
         self.page.overlay.clear()
-        self.page.add(TileGame(self.set_num, self.tiles_num)) #reload game
+        self.page.add(TileGame()) #reload game
 
     async def special_increment(self):
         self.click_count.count += 1
@@ -252,6 +252,20 @@ class TileGame(ft.Container):
         self.match_count.opacity = 1
         self.text_row.update()
 
+    def set_randomizer(self):
+        dir_numbers = []
+        with os.scandir('assets') as dir:
+            for entry in dir:
+                if 'tiles_' in entry.name:
+                    dir_numbers.append(int(entry.name.strip('tiles_')))
+
+        set_num = random.sample(dir_numbers, 1)[0]
+
+        with os.scandir(f'assets/tiles_{set_num}') as tile_dir:
+            for count, entry in enumerate(tile_dir):
+                tile_num = count
+
+        return set_num, tile_num
 
 def main(page: ft.Page):
 
@@ -262,7 +276,7 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.add(ft.Column(controls=[
-        TileGame(set_num=1, tiles_num=64)
+        TileGame()
     ], alignment = ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER))
 
 
