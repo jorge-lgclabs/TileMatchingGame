@@ -1,6 +1,7 @@
 import os
 import random
 import asyncio
+import json
 from pathlib import Path
 import flet as ft
 
@@ -155,9 +156,9 @@ class TextCounter(ft.Text):
 
 
 class TileGame(ft.Container):
-    def __init__(self, assets_dir):
+    def __init__(self, tile_index: dict):
         super().__init__()
-        self.assets_dir = assets_dir
+        self.tile_index = tile_index
         self.set_num, self.tiles_num = self.set_randomizer()
         self.target_width = self.target_height = 85
         self.grid_width = (self.target_width * 6) + 65
@@ -238,7 +239,7 @@ class TileGame(ft.Container):
     async def reload_game(self):
         self.page.controls.clear()
         self.page.overlay.clear()
-        self.page.add(TileGame()) #reload game
+        self.page.add(TileGame(self.tile_index)) #reload game
 
     async def special_increment(self):
         self.click_count.count += 1
@@ -254,23 +255,9 @@ class TileGame(ft.Container):
         self.text_row.update()
 
     def set_randomizer(self):
-        print(self.assets_dir)
+        set_num, tile_num = random.choice(list(self.tile_index.items()))
+        return set_num, tile_num
 
-        dir_numbers = []
-        try:
-            with os.scandir(self.assets_dir) as dir:
-                for entry in dir:
-                    if 'tiles_' in entry.name:
-                        dir_numbers.append(int(entry.name.strip('tiles_')))
-
-            set_num = random.sample(dir_numbers, 1)[0]
-
-            with os.scandir(self.assets_dir / f'tiles_{set_num}') as tile_dir:
-                for count, entry in enumerate(tile_dir):
-                    tile_num = count
-            return set_num, tile_num
-        except FileNotFoundError:
-            return 1, 64
 
 
 def get_assets_dir() -> Path:
@@ -278,15 +265,16 @@ def get_assets_dir() -> Path:
     return Path(os.environ.get("FLET_ASSETS_DIR", str(default_assets_dir))).resolve()
 
 def main(page: ft.Page):
-
     box = ft.Container(content=ft.Text("hello world", size=40), rotate=ft.Rotate(angle=0, alignment=ft.Alignment.CENTER), animate_rotation=ft.Animation(2100, ft.AnimationCurve.DECELERATE))
 
+    with open('tile_index.json', 'r') as file:
+        tile_index = json.load(file)
 
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.add(ft.Column(controls=[
-        TileGame(assets_dir=get_assets_dir())
+        TileGame(tile_index=tile_index)
     ], alignment = ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER))
 
 
