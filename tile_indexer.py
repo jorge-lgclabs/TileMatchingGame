@@ -15,6 +15,10 @@ def tile_indexer():
     except FileNotFoundError:
         exit(1)
     return tile_index
+def index_tiles():
+    with open('tile_index.json', 'w') as file:
+        json.dump(tile_indexer(), file, indent=4)
 
-with open('tile_index.json', 'w') as file:
-    json.dump(tile_indexer(), file, indent=4)
+def get_tile_index():
+    with open('tile_index.json', 'r') as file:
+        return json.load(fp=file)

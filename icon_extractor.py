@@ -13,6 +13,10 @@ def extract_icons(icon_sheet_path, set_num, threshold):
     # Create mask: non-white pixels
     white_mask = (data[:, :, 0] > threshold) & (data[:, :, 1] > threshold) & (data[:, :, 2] > threshold)
 
+    # Image.fromarray(white_mask).show()
+    # input('hold')
+
+
     column_coords = []
     row_coords = []
 
