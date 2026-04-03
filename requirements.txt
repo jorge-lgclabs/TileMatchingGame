@@ -1,7 +1,1 @@
 flet~=0.83.0
-numpy~=2.4.3
-pillow~=12.1.1
-scipy~=1.17.1
-replicate~=1.0.7
-requests~=2.32.5
-python-dotenv~=1.2.2
