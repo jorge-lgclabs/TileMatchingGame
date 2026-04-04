@@ -14,11 +14,14 @@ def tile_indexer():
                         tile_index[set_num] = tile_num
     except FileNotFoundError:
         exit(1)
-    return tile_index
-def index_tiles():
-    with open('tile_index.json', 'w') as file:
-        json.dump(tile_indexer(), file, indent=4)
+    return tile_index, set_num
 
-def get_tile_index():
+def index_tiles():
+    title_index, set_num = tile_indexer()
+    with open('tile_index.json', 'w') as file:
+        json.dump(title_index, file, indent=4)
+    print(f'... indexing complete, latest {set_num=}')
+
+def get_tile_index() -> dict:
     with open('tile_index.json', 'r') as file:
         return json.load(fp=file)
