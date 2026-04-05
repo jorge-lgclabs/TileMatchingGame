@@ -16,8 +16,9 @@ from requests import HTTPError
 load_dotenv()  # Loads variables from .env into the environment
 
 class IconSheet:
-    def __init__(self, image_path):
+    def __init__(self, image_path, max_size):
         self.image = open(image_path, 'rb')
+        self.max_size = max_size
         self.pil_image = Image.open(image_path).convert('RGBA')
         self.image_array = self.get_image_array()
         self.file_urls = self.load_masks_urls()
@@ -27,11 +28,15 @@ class IconSheet:
 
     def extract_icons(self):
         save_folder = self.create_next_folder()
-        for index, file in enumerate(self.file_list):
+        icon_number = 0
+        for file in self.file_list:
             cropped = self.mask_crop(file)
-            print(f'saving {save_folder}/icon{index}.png... ', end="")
-            cropped.save(fp=f'{save_folder}/icon{index}.png')
+            if not cropped:
+                continue
+            print(f'saving {save_folder}/icon{icon_number}.png... ', end="")
+            cropped.save(fp=f'{save_folder}/icon{icon_number}.png')
             print('done')
+            icon_number += 1
             # if 'mask_17' in file:
             #     input('check 17')
         tile_indexer.index_tiles()
@@ -40,14 +45,36 @@ class IconSheet:
         tile_index = tile_indexer.get_tile_index()
         next_folder_num = max(int(num) for num in tile_index.keys()) + 1
         folder_name = f'assets/tiles_{next_folder_num}'
-        os.mkdir(path=folder_name)
+        if not os.path.exists(folder_name):
+            os.mkdir(path=folder_name)
         return folder_name
 
     def mask_crop(self, mask_file):
         mask = Image.open(mask_file)
         mask_array = np.array(mask)
+        max_x, min_x, max_y, min_y = self.get_crop_coords(mask_array)
+        if max_x - min_x > self.max_size:
+            print(f'icon rejected for being {max_x - min_x}px')
+        return self.apply_mask(mask_array, max_x, min_x, max_y, min_y)
 
-        #Image.fromarray(mask_array).show()
+    def apply_mask(self, mask_array, max_x, min_x, max_y, min_y):
+        cropped_mask_array = mask_array[min_y:max_y, min_x:max_x]
+        if len(cropped_mask_array) > self.max_size:
+            return False
+        # old_cropped = self.image_array[min_y:max_y, min_x:max_x, :] for comparison purposes during testing
+        cropped_image_array = self.image_array[min_y:max_y, min_x:max_x, :].copy()
+        # old_crop = Image.fromarray(old_cropped)
+        for line_index, line in enumerate(cropped_mask_array):
+            for pixel_index, pixel in enumerate(line):
+                if pixel == 0:
+                    cropped_image_array[line_index][pixel_index] = np.full(4, 255, dtype=np.uint8)
+
+        cropped_and_masked = Image.fromarray(cropped_image_array)
+        # old_crop.show()
+        # cropped_and_masked.show()
+        return cropped_and_masked
+
+    def get_crop_coords(self, mask_array):
         min_x = len(mask_array[0])
         min_y = len(mask_array)
         max_x = 0
@@ -69,6 +96,11 @@ class IconSheet:
         max_y += self.padding
         max_x += self.padding
 
+        max_x, min_x, max_y, min_y = self.get_crop_square(max_x, min_x, max_y, min_y, mask_array)
+
+        return max_x, min_x, max_y, min_y
+
+    def get_crop_square(self, max_x, min_x, max_y, min_y, mask_array):
         if (max_x - min_x) > (max_y - min_y):
             longest_side = (max_x - min_x)
             difference = longest_side - (max_y - min_y)
@@ -87,36 +119,23 @@ class IconSheet:
         if min_x < 0:
             max_x += (min_x * -1)
             min_x = 0
-            print(f'{mask_file=}')
-            print(f'{min_x=}')
         if max_x >= len(mask_array[0]):
             min_x -= (max_x - (len(mask_array[0]))) + 1
             max_x = len(mask_array[0]) - 1
-            print(f'{mask_file=}')
-            print(f'{max_x=}')
         if min_y < 0:
             max_y += (min_y * -1)
             min_y = 0
-            print(f'{mask_file=}')
-            print(f'{min_y=}')
         if max_y >= len(mask_array):
             min_y -= (max_y - (len(mask_array))) + 1
             max_y = len(mask_array) - 1
-            print(f'{mask_file=}')
-            print(f'{max_y=}')
 
-
-
-        #mask_array = mask_array[min_y:max_y]
-        #cropped = mask_array[min_y:max_y, min_x:max_x]
-        icon_cropped = self.image_array[min_y:max_y, min_x:max_x, :]
-        final_cropped = Image.fromarray(icon_cropped)
-        return final_cropped
+        return max_x, min_x, max_y, min_y
 
     def get_image_array(self):
         return np.array(self.pil_image)
 
-    def get_masks_list(self):
+    def generate_masks(self):
+        print('getting mask output from sam-2 API...')
         output = replicate.run("meta/sam-2:fe97b453a6455861e3bac769b441ca1f1086110da7466dbb65cf1eecfd60dc83",
             input={
             "image": self.image,
@@ -125,14 +144,14 @@ class IconSheet:
             "stability_score_thresh": 0.95,
             "use_m2m": True
         })
-
+        print('mask list received')
         list_output = [file_object.url for file_object in output['individual_masks']]
         with open('work/masks.json', 'w') as file:
             json.dump(list_output, file)
 
     def load_masks_urls(self):
         if not os.path.exists('work/masks.json'):
-            self.get_masks_list()
+            self.generate_masks()
         with open('work/masks.json', 'r') as file:
             file_urls = json.load(fp=file)
 
@@ -161,11 +180,11 @@ class IconSheet:
 
         return files_list
 
-# test_sheet = IconSheet(image_path=IMAGE_FILEPATH)
-# test_sheet.extract_icons()
-
 
 while True:
     filepath = input('Please enter filename or "stop": ')
-    sheet = IconSheet(image_path=f'assets/{filepath}')
+    if filepath == 'stop':
+        exit(0)
+    max_size = int(input('What should be the biggest icon allowed (300, 400, ect): '))
+    sheet = IconSheet(image_path=f'assets/{filepath}', max_size=max_size)
     sheet.extract_icons()
