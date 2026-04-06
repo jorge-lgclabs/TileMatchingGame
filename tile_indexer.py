@@ -20,7 +20,7 @@ def index_tiles():
     title_index, set_num = tile_indexer()
     with open('tile_index.json', 'w') as file:
         json.dump(title_index, file, indent=4)
-    print(f'... indexing complete, latest {set_num=}')
+    print(f'... indexing complete, latest {max(set(title_index.keys()))}')
 
 def get_tile_index() -> dict:
     with open('tile_index.json', 'r') as file:
