@@ -11,8 +11,6 @@ from dotenv import load_dotenv
 import requests
 from requests import HTTPError
 
-#IMAGE_FILEPATH = 'assets/servo386_httpss.mj.run4gJKVVdUX3k_httpss.mj.runk1uyOiNwROk_tatt_987b1822-bc8e-4df8-aeca-a7c6bdb527eb(2).png'
-
 load_dotenv()  # Loads variables from .env into the environment
 
 class IconSheet:
