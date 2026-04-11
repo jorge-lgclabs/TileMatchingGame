@@ -255,7 +255,8 @@ class TileGame(ft.Container):
         self.text_row.update()
 
     def set_randomizer(self):
-        set_num, tile_num = random.choice(list(self.tile_index.items()))
+        set_num = random.choice(list(self.tile_index.keys()))
+        tile_num = self.tile_index[set_num][0]
         return set_num, tile_num
 
 
