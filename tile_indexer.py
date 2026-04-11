@@ -4,8 +4,8 @@ import os
 def tile_indexer():
     set_folders_and_subfolders = get_folders_and_sub_folders()
     current_index = get_tile_index()
-    print(set_folders_and_subfolders)
-    print(current_index)
+    # print(set_folders_and_subfolders)
+    # print(current_index)
 
     for set_num, subfolder_nums in set_folders_and_subfolders:
         if str(set_num) in current_index.keys():
@@ -74,5 +74,3 @@ def index_tiles():
 def get_tile_index() -> dict:
     with open('tile_index.json', 'r') as file:
         return json.load(fp=file)
-
-index_tiles()
