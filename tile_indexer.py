@@ -6,6 +6,7 @@ def tile_indexer():
     current_index = get_tile_index()
     # print(set_folders_and_subfolders)
     # print(current_index)
+    # input('hold')
 
     for set_num, subfolder_nums in set_folders_and_subfolders:
         if str(set_num) in current_index.keys():
@@ -60,6 +61,7 @@ def get_folders_and_sub_folders():
                     if 'level_' in entry.name:
                         level_num = int(entry.name.strip('level_'))
                         subfolder_nums.append(level_num)
+            subfolder_nums.sort()
 
     except FileNotFoundError:
         exit(1)
@@ -74,3 +76,5 @@ def index_tiles():
 def get_tile_index() -> dict:
     with open('tile_index.json', 'r') as file:
         return json.load(fp=file)
+
+index_tiles()
