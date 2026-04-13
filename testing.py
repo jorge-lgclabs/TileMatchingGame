@@ -176,6 +176,11 @@ class TileGame(ft.Container):
             ft.Container(self.match_count, width=self.target_width, alignment=ft.Alignment.CENTER)
         ])
 
+        # testing
+        # self.tiles_num = 72
+        # self.set_num = 1
+
+
         self.icon_numbers = random.sample(range(0,self.tiles_num), 18)
         self.icon_images = [ft.Image(f'/tiles_{self.set_num}/icon{num}.png', width=self.target_width, height=self.target_height) for num in self.icon_numbers for _ in range(2)]
         for _ in range(5):

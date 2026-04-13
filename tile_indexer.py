@@ -77,4 +77,6 @@ def get_tile_index() -> dict:
     with open('tile_index.json', 'r') as file:
         return json.load(fp=file)
 
-index_tiles()
+
+if __name__ == "__main__":
+    index_tiles()

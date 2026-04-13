@@ -139,7 +139,7 @@ class IconEscalator:
 
 while True:
     set_num = int(input('what set num?: '))
-    level = int(input('what level?"'))
+    level = int(input('what level?: '))
 
     test = IconEscalator(set_num, level)
 
