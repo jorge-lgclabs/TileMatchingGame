@@ -1,6 +1,6 @@
 import json
 import flet as ft
-import app.classes.TileGame
+from app.classes import TileGame
 
 def main(page: ft.Page):
 

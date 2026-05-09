@@ -2,7 +2,6 @@ import flet as ft
 import asyncio
 import random
 
-
 class TextCounter(ft.Text):
     def __init__(self, size):
         super().__init__()
