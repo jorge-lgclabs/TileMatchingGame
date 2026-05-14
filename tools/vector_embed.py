@@ -209,7 +209,7 @@ class SetCreator:
 
 
 
-test = SetCreator('tiles_5')
+test = SetCreator('tiles_7')
 
 
 
