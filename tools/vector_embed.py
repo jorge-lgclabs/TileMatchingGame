@@ -1,3 +1,4 @@
+import os
 import random
 from itertools import combinations
 import json
@@ -7,6 +8,7 @@ from torchvision import models, transforms
 from torchvision.models import ResNet50_Weights
 from PIL import Image
 import numpy as np
+import shutil
 
 def get_embedding(image_path, transform, model):
     img = Image.open(image_path).convert('RGB')
@@ -114,6 +116,35 @@ class SetCreator:
         else:
             exit(0)
 
+    def process_results(self):
+        self.open_results_json()
+        self.find_most_similar_set()
+        self.copy_files()
+
+    def copy_files(self):
+        input('Proceed to moving files? press enter')
+        root_folder = Path(f'{self.asset_dir}/new_levels')
+        levels = list(root_folder.glob('level_*'))
+        max_level = 0
+        for level in levels:
+            level_num = int(str(level).split('/')[-1].split('_')[1])
+            max_level = max(max_level, level_num)
+        destination_folder = f'{root_folder}/level_{max_level+1}'
+        os.makedirs(destination_folder, exist_ok=True)
+
+        with open(f'{destination_folder}/similarity.txt', 'w') as similarity_file:
+            similarity_file.write(str(self.max_avg))
+
+        print(f'moving files to {destination_folder}')
+
+        for index, path in enumerate(self.max_set):
+            shutil.move(src=path, dst=f'{destination_folder}/icon{index}.png')
+            print(f'moved {path} to {destination_folder}/icon{index}.png')
+
+        print('file moving done')
+        self.get_input()
+
+
     def find_most_similar_set(self):
         self.max_avg = 0
         for key, value in self.results_json.items():
@@ -131,7 +162,6 @@ class SetCreator:
             img.show()
             img.close()
 
-
     def open_results_json(self):
         working_dir = Path.cwd()
         jsons = list(working_dir.glob('*.json'))
@@ -145,10 +175,6 @@ class SetCreator:
         except FileNotFoundError:
             print('file not found, try again')
             self.open_results_json()
-
-    def process_results(self):
-        self.open_results_json()
-        self.find_most_similar_set()
 
     def calculate_results(self):
         print(f'starting process for {self.folder_name}')
@@ -183,7 +209,7 @@ class SetCreator:
 
 
 
-test = SetCreator('tiles_2')
+test = SetCreator('tiles_5')
 
 
 
