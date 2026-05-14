@@ -164,7 +164,7 @@ class SetCreator:
 
     def open_results_json(self):
         working_dir = Path.cwd()
-        jsons = list(working_dir.glob('*.json'))
+        jsons = sorted(working_dir.glob('*.json'), key=lambda p: os.path.getmtime(p), reverse=True)
         selections = {}
         for num, path in enumerate(jsons):
             selections[num] = path
