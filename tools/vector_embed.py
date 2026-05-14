@@ -213,71 +213,60 @@ class SetCreator:
 
 
 
-test = SetCreator('tiles_4')
+test = SetCreator('tiles_test')
 
 
 
+class DeleteDuplicates:
+    def __init__(self):
 
-# def compare_two_images(path1, path2):
-#     emb1 = get_embedding(path1)
-#     emb2 = get_embedding(path2)
-#
-#     # Cosine similarity (higher = more similar, range -1 to 1)
-#     norm1 = np.linalg.norm(emb1)
-#     norm2 = np.linalg.norm(emb2)
-#     cosine_similarity = np.dot(emb1, emb2) / (norm1 * norm2)
-#     #print(f"Cosine similarity: {cosine_similarity:.4f}")
-#     return cosine_similarity
-#
-#     # # Raw L1 distance (lower = more similar)
-#     # l1_distance = np.sum(np.abs(emb1 - emb2))
-#     # print(f"L1 distance: {l1_distance:.4f}")
-#
-# def compare_two_random_images(tileset_folder: str, last_num_in_set: int):
-#     random_image_nums = random.sample(range(0, last_num_in_set), 2)
-#     random_image_paths = [f'{asset_dir}/{tileset_folder}/icon{num}.png' for num in random_image_nums]
-#     print(random_image_nums)
-#     return random_image_nums, compare_two_images(random_image_paths[0], random_image_paths[1])
-#
-# def compare_subset_of_16(tileset_folder: str, last_num_in_set: int):
-#     total = 0
-#     count = 0
-#     random_image_nums = random.sample(range(0, last_num_in_set), 16)
-#     random_image_paths = [f'{asset_dir}/{tileset_folder}/icon{num}.png' for num in random_image_nums]
-#
-#     # for path in random_image_paths:
-#     #     img = Image.open(path)
-#     #     img.show()
-#
-#
-#     image_embeddings = [get_embedding(img_path) for img_path in random_image_paths]
-#
-#     for a, b in combinations(image_embeddings, 2):
-#         # Normalize each vector first
-#         a_norm = a / np.linalg.norm(a)
-#         b_norm = b / np.linalg.norm(b)
-#         similarity = np.dot(a_norm, b_norm)
-#         total += (1 - similarity)
-#         count += 1
-#     if total / count > .6:
-#         print('high value found: ', total / count)
-#         for path in random_image_paths:
-#             img = Image.open(path)
-#             img.show()
-#         input('press enter to continue')
-#         return
-#
-#     return total / count  # Mean of (1 - cosine similarity)
+        self.asset_dir = f'/home/jorge/Documents/jer_OSU/Portfolio/TileMatchingGame/assets/tiles_test'
 
 
+        # 1. Load model with updated weights API
+        weights = ResNet50_Weights.DEFAULT
+        self.model = models.resnet50(weights=weights)
+        self.model = torch.nn.Sequential(*list(self.model.children())[:-1])
+        self.model.eval()
+
+        # 2. Manual transform: no crop, just normalize
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        self.compare_all(self.asset_dir)
+
+    def compare_all(self, folder: str):
+        folder_path = Path(folder)
+        pngs = [str(p) for p in sorted(folder_path.glob('*.png'))]
+        embeds = {p : get_embedding(p, self.transform, self.model) for p in pngs}
+        to_delete = set()
+        for path1, path2 in combinations(embeds.keys(), 2):
+            emb1 = embeds[path1]
+            emb2 = embeds[path2]
+            score = self.compare_two_images(emb1,emb2)
+            if score >= .98:
+                print(score, path1, path2)
+                print(f'{path2} set to delete')
+                to_delete.add(path2)
+
+        for path in to_delete:
+            print(f'deleting {path}')
+            os.remove(path)
+            print('done')
 
 
-# with open("results.json", "r") as json_file:
-#     datadict = json.load(json_file)
-#     avgs = list(datadict.keys())
-#     avgs.sort(reverse=True)
-#     best_cluster = datadict[avgs[0]][0]
-#     print(best_cluster)
+    def compare_two_images(self, emb1, emb2):
+
+        # Cosine similarity (higher = more similar, range -1 to 1)
+        norm1 = np.linalg.norm(emb1)
+        norm2 = np.linalg.norm(emb2)
+        cosine_similarity = np.dot(emb1, emb2) / (norm1 * norm2)
+        # print(f"Cosine similarity: {cosine_similarity:.4f}")
+        return cosine_similarity
+
+
+# dup = DeleteDuplicates()
 
 
 
