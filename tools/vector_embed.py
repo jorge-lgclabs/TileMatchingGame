@@ -165,9 +165,13 @@ class SetCreator:
     def open_results_json(self):
         working_dir = Path.cwd()
         jsons = list(working_dir.glob('*.json'))
-        for path in jsons:
-            print(just_filename(str(path)))
-        filename = input('please enter the filename of the json to open: ')
+        selections = {}
+        for num, path in enumerate(jsons):
+            selections[num] = path
+            print(num, ': ', just_filename(str(path)))
+        num_choice = input('please enter the number of the filename of the json to open: ')
+        filename = selections[int(num_choice)]
+
         try:
             with open(filename, 'r') as results:
                 self.results_json = json.load(results)
