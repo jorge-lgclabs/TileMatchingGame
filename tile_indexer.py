@@ -1,5 +1,7 @@
 import json
 import os
+from pathlib import Path
+from PIL import Image
 
 def tile_indexer():
     set_folders_and_subfolders = get_folders_and_sub_folders()
@@ -77,6 +79,26 @@ def get_tile_index() -> dict:
     with open('tile_index.json', 'r') as file:
         return json.load(fp=file)
 
+def image_resizer(folder: str):
+    target_size = (90, 90)
+    target_dir = Path(f'/home/jorge/Documents/jer_OSU/Portfolio/TileMatchingGame/assets/{folder}')
+    for png_path in sorted(target_dir.glob("*.png")):
+        img = Image.open(png_path).convert('RGB')
+        img.thumbnail(target_size, Image.Resampling.LANCZOS)
+
+        new_img = Image.new('RGB', target_size, (0, 0, 0))
+        new_img.paste(img, ((target_size[0] - img.width) // 2,
+                            (target_size[1] - img.height) // 2))
+
+        new_img.save(png_path)
+
+
 
 if __name__ == "__main__":
-    index_tiles()
+    #index_tiles()
+    image_resizer('tiles_4')
+    image_resizer('tiles_5')
+    image_resizer('tiles_6')
+    image_resizer('tiles_7')
+    image_resizer('tiles_8')
+    image_resizer('tiles_9')
