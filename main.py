@@ -4,14 +4,17 @@ from app.classes import TileGame
 
 def main(page: ft.Page):
 
-    with open('tile_index.json', 'r') as file:
-        tile_index = json.load(file)
+
+
+    images = [f'/new_levels/level_5/icon{i}.png' for i in range(16)]
+
+    level_test = TileGame(image_paths=images)
 
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.add(ft.Column(controls=[
-                            TileGame(tile_index=tile_index)
+                            level_test
                         ],
                         alignment = ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER)

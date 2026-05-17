@@ -62,10 +62,8 @@ class TileRevealer(ft.Container):
         self.door.update()
 
 class TileGame(ft.Container):
-    def __init__(self, tile_index: dict):
+    def __init__(self, image_paths):
         super().__init__()
-        self.tile_index = tile_index
-        self.set_num, self.tiles_num = self.set_randomizer()
         self.target_width = self.target_height = 85
         self.grid_width = (self.target_width * 6) + 65
         self.width = self.grid_width
@@ -81,16 +79,7 @@ class TileGame(ft.Container):
             ft.Container(self.click_count, width=self.target_width, alignment=ft.Alignment.CENTER),
             ft.Container(self.match_count, width=self.target_width, alignment=ft.Alignment.CENTER)
         ])
-
-        # testing
-        # self.tiles_num = 72
-        # self.set_num = 1
-
-
-        self.icon_numbers = random.sample(range(0,self.tiles_num), 18)
-        self.icon_images = [ft.Image(f'/tiles_{self.set_num}/icon{num}.png', width=self.target_width, height=self.target_height) for num in self.icon_numbers for _ in range(2)]
-        for _ in range(5):
-            random.shuffle(self.icon_images)
+        self.icon_images = self.create_double_and_shuffle_images(image_paths)
         self.tiles = [TileRevealer(image) for image in self.icon_images]
         self.define_handlers()
         self.click_1_cache = None
@@ -101,6 +90,14 @@ class TileGame(ft.Container):
     def define_handlers(self):
         for tile in self.tiles:
             tile.door.on_click = self.click_handler
+
+    def create_double_and_shuffle_images(self, image_paths):
+        result = [
+            ft.Image(path, width=self.target_width, height=self.target_height) for path
+            in image_paths for _ in range(2)]
+        for _ in range(5):
+            random.shuffle(result)
+        return result
 
     async def click_handler(self, e):
         open_func, close_func, src_str = e.control.data
@@ -164,8 +161,3 @@ class TileGame(ft.Container):
         self.click_count.opacity = 1
         self.match_count.opacity = 1
         self.text_row.update()
-
-    def set_randomizer(self):
-        set_num = random.choice(list(self.tile_index.keys()))
-        tile_num = self.tile_index[set_num][0]
-        return set_num, tile_num
