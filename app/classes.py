@@ -29,7 +29,7 @@ class TextCounter(ft.Text):
         self.update()
 
 class TileRevealer(ft.Container):
-    def __init__(self, image_to_reveal):
+    def __init__(self, image_to_reveal, debug_mode=False):
         super().__init__()
         self.image_obj = image_to_reveal
         self.width = self.image_obj.width
@@ -49,8 +49,11 @@ class TileRevealer(ft.Container):
             on_click = self.door_open,
             data=[self.door_open, self.door_close, self.image_obj.src]
         )
+        if debug_mode:
+            self.content = ft.Stack([self.image_obj])
+        else:
+            self.content = ft.Stack([self.image_obj, self.door])
 
-        self.content = ft.Stack([self.image_obj, self.door])
 
     async def door_open(self):
         self.door.offset = ft.Offset(0,-1.1)
@@ -62,8 +65,9 @@ class TileRevealer(ft.Container):
         self.door.update()
 
 class TileGame(ft.Container):
-    def __init__(self, image_paths):
+    def __init__(self, image_paths, reload_func, debug_mode=False):
         super().__init__()
+        self.reload_func = reload_func
         self.target_width = self.target_height = 85
         self.grid_width = (self.target_width * 6) + 65
         self.width = self.grid_width
@@ -80,7 +84,7 @@ class TileGame(ft.Container):
             ft.Container(self.match_count, width=self.target_width, alignment=ft.Alignment.CENTER)
         ])
         self.icon_images = self.create_double_and_shuffle_images(image_paths)
-        self.tiles = [TileRevealer(image) for image in self.icon_images]
+        self.tiles = [TileRevealer(image, debug_mode) for image in self.icon_images]
         self.define_handlers()
         self.click_1_cache = None
         self.click_2_cache = None
@@ -147,7 +151,7 @@ class TileGame(ft.Container):
     async def reload_game(self):
         self.page.controls.clear()
         self.page.overlay.clear()
-        self.page.add(TileGame(self.tile_index)) #reload game
+        self.page.add(self.reload_func()) #reload game
 
     async def special_increment(self):
         self.click_count.count += 1

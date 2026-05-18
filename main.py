@@ -1,20 +1,21 @@
 import json
+import random
+
 import flet as ft
 from app.classes import TileGame
 
 def main(page: ft.Page):
+    def create_game():
+        level = random.randrange(1, 54)
+        images = [f'/new_levels/level_{level}/icon{i}.png' for i in range(18)]
 
-
-
-    images = [f'/new_levels/level_5/icon{i}.png' for i in range(16)]
-
-    level_test = TileGame(image_paths=images)
+        return TileGame(image_paths=images, reload_func=create_game)
 
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.add(ft.Column(controls=[
-                            level_test
+                            create_game()
                         ],
                         alignment = ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER)

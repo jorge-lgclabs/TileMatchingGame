@@ -1,5 +1,7 @@
 import os
+import flet as ft
 import random
+from app.classes import TileGame
 from itertools import combinations
 import json
 from pathlib import Path
@@ -23,7 +25,7 @@ def cosine_sim(a, b):
 
 def just_filename(filepath: str):
     files = str(filepath).split('/')
-    return files[-1]
+    return f'{files[-2]}/{files[-1]}'
 
 def cluster_avg_similarity(cluster_indices, embeddings):
     total = 0
@@ -34,7 +36,7 @@ def cluster_avg_similarity(cluster_indices, embeddings):
     return float(total / count)  # Average of all pairs
 
 def find_clusters(img_paths: list, embeddings: list, cluster_seed_index: int):
-    target_size = 16
+    target_size = 18
     cluster = {cluster_seed_index}  # Start with one image
     print(f'beginning work on cluster for seed image {just_filename(img_paths[cluster_seed_index])}')
     while len(cluster) < target_size:
@@ -65,7 +67,7 @@ def find_clusters(img_paths: list, embeddings: list, cluster_seed_index: int):
     return cluster_paths, avg
 
 def find_nearest_neighbors(img_paths: list, embeddings: list, cluster_seed_index: int):
-    target_size = 16
+    target_size = 18
 
     # Score every other image against the seed only
     scores = []
@@ -87,6 +89,34 @@ def find_nearest_neighbors(img_paths: list, embeddings: list, cluster_seed_index
     print(f'\nnearest neighbors for {just_filename(img_paths[cluster_seed_index])} done, avg similarity = {avg}')
 
     return neighbors_paths, avg
+
+def show_images(img_path_sets, avgs, infos):
+    def level(page: ft.Page):
+        cluster_set, neighbor_set = img_path_sets
+        cluster_highest_avg, neighbor_highest_avg = avgs
+        cluster_info, neighbor_info = infos
+        cluster_show = TileGame(image_paths=cluster_set, debug_mode=True)
+        neighbor_show = TileGame(image_paths=neighbor_set, debug_mode=True)
+
+        cluster_show.text_row.controls[0] = ft.Text(cluster_highest_avg)
+        cluster_show.text_row.controls[1] = ft.Text(cluster_info, size=12)
+        neighbor_show.text_row.controls[0] = ft.Text(neighbor_highest_avg)
+        neighbor_show.text_row.controls[1]= ft.Text(neighbor_info, size=12)
+
+        spacer = ft.Container(width=15, height=465, bgcolor='grey')
+
+        page.theme_mode = ft.ThemeMode.DARK
+        page.vertical_alignment = ft.MainAxisAlignment.CENTER
+        page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+        page.add(ft.Row(controls=[
+            cluster_show, spacer, neighbor_show
+        ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER)
+        )
+
+    ft.run(level, assets_dir='assets')
+
 
 class SetCreator:
     def __init__(self, folder_name: str):
@@ -122,7 +152,8 @@ class SetCreator:
         self.copy_files()
 
     def copy_files(self):
-        input('Proceed to moving files? press enter')
+        select_index = input('Proceed to moving files? enter 0 for cluster, 1 for neighbor: ')
+        select_index = int(select_index)
         root_folder = Path(f'{self.asset_dir}/new_levels')
         levels = list(root_folder.glob('level_*'))
         max_level = 0
@@ -133,34 +164,40 @@ class SetCreator:
         os.makedirs(destination_folder, exist_ok=True)
 
         with open(f'{destination_folder}/similarity.txt', 'w') as similarity_file:
-            similarity_file.write(str(self.max_avg))
+            similarity_file.write(str(self.max_avgs[select_index]))
 
         print(f'moving files to {destination_folder}')
 
-        for index, path in enumerate(self.max_set):
+        for index, path in enumerate(self.max_sets[select_index]):
             shutil.move(src=path, dst=f'{destination_folder}/icon{index}.png')
             print(f'moved {path} to {destination_folder}/icon{index}.png')
 
         print('file moving done')
         self.get_input()
 
-
     def find_most_similar_set(self):
-        self.max_avg = 0
+        self.max_avgs = [0,0]
+        self.max_sets = [[],[]]
+        self.max_set_infos = ["", ""]
         for key, value in self.results_json.items():
             key = key.strip('()')
             avg, info = key.split(',')
             avg = float(avg)
-            if avg > self.max_avg:
-                self.max_avg = avg
-                self.max_set = value
-                self.max_set_info = info
-        print(f'the set with the highest similarity is {self.max_set_info} with a similarity of {self.max_avg}, consisting of \n{self.max_set}')
+            if 'cluster' in info and  avg > self.max_avgs[0]:
+                self.max_avgs[0] = avg
+                self.max_sets[0] = value
+                self.max_set_infos[0] = info
+            elif 'neighbor' in info and avg > self.max_avgs[1]:
+                self.max_avgs[1] = avg
+                self.max_sets[1] = value
+                self.max_set_infos[1] = info
+            else:
+                continue
 
-        for path in self.max_set:
-            img = Image.open(path)
-            img.show()
-            img.close()
+        print(f'the nearest neighbor set with the highest similarity is {self.max_set_infos[1]} with a similarity of {self.max_avgs[1]}, consisting of \n{self.max_sets[1]}')
+        print(f'the cluster set with the highest similarity is {self.max_set_infos[0]} with a similarity of {self.max_avgs[0]}, consisting of \n{self.max_sets[0]}')
+
+        show_images(self.max_sets, self.max_avgs, self.max_set_infos)
 
     def open_results_json(self):
         working_dir = Path.cwd()
@@ -189,7 +226,7 @@ class SetCreator:
         self.get_input()
 
     def load_image_paths_and_embeds(self):
-        self.img_path_objs = list(self.set_dir.glob('*.png'))
+        self.img_path_objs = list(self.set_dir.rglob('*.png'))
         self.img_paths = [str(path) for path in self.img_path_objs]
         print('getting emebds...', end="")
         self.img_embeds = [get_embedding(path, self.transform, self.model) for path in self.img_paths]
@@ -198,10 +235,10 @@ class SetCreator:
     def get_results(self):
         for i in range(len(self.img_paths)):
             cluster_paths, cluster_avg = find_clusters(img_paths=self.img_paths, embeddings=self.img_embeds, cluster_seed_index=i)
-            self.results_dict[cluster_avg, f'cluster {self.folder_name}/{just_filename(self.img_paths[i])}'] = cluster_paths
+            self.results_dict[cluster_avg, f'cluster {just_filename(self.img_paths[i])}'] = cluster_paths
 
             neighbors_paths, neighbors_avg = find_nearest_neighbors(img_paths=self.img_paths, embeddings=self.img_embeds, cluster_seed_index=i)
-            self.results_dict[neighbors_avg, f'nearest neighbors {self.folder_name}/{just_filename(self.img_paths[i])}'] = neighbors_paths
+            self.results_dict[neighbors_avg, f'nearest neighbors {just_filename(self.img_paths[i])}'] = neighbors_paths
 
     def save_results(self):
         print(f"saving file 'results_{self.folder_name}_{len(self.img_paths)}_files.json'....", end="")
@@ -212,8 +249,7 @@ class SetCreator:
 
 
 
-
-test = SetCreator('tiles_test')
+test = SetCreator('redo7')
 
 
 
