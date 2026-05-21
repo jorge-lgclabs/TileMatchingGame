@@ -106,6 +106,10 @@ class TileGame(ft.Container):
             random.shuffle(result)
         return result
 
+    def end_game(self):
+        self.scorekeeper['current_level_complete'] = True
+        self.state_change()
+
     async def click_handler(self, e):
         open_func, close_func, src_str = e.control.data
 
@@ -142,7 +146,7 @@ class TileGame(ft.Container):
                                   animate_opacity=ft.Animation(800, ft.AnimationCurve.EASE_IN), opacity=0,
                                   alignment=ft.Alignment.CENTER)
         win_text = ft.Text('You win!', text_align=ft.TextAlign.CENTER, size=self.target_width)
-        play_again_button = ft.Button('Next Level', color='blue', on_click=self.state_change)
+        play_again_button = ft.Button('Next Level', color='blue', on_click=self.end_game)
 
         win_screen.content=ft.Column(horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                      alignment=ft.MainAxisAlignment.CENTER, controls=[
@@ -196,6 +200,16 @@ class NewGame:
         images = [f'/new_levels/level_{self.current_level}/icon{i}.png' for i in range(18)]
         self.current_game = TileGame(image_paths=images, state_change_func=self.state_change, scorekeeper=self.scorekeeper)
 
+    def next_level(self):
+        self.current_level_complete = self.scorekeeper['current_level_complete'] = False
+        self.current_level = self.scorekeeper['current_level'] = self.current_level + 1
+        self.load_level()
+
+        self.page.controls.pop()
+        self.page.controls.append(self.current_game)
+
+        self.page.update()
+
     def read_scorekeeper(self):
         self.current_level = self.scorekeeper['current_level']
         self.score = self.scorekeeper['score']
@@ -206,3 +220,5 @@ class NewGame:
     def state_change(self):
         self.read_scorekeeper()
         print(f'{self.current_level=}\n{self.score=}\n{self.current_click_count=}\n{self.current_match_count=}\n{self.current_level_complete=}')
+        if self.current_level_complete:
+            self.next_level()
