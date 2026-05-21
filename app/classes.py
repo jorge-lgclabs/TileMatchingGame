@@ -1,6 +1,8 @@
 import flet as ft
 import asyncio
 import random
+import uuid
+import time
 
 class TextCounter(ft.Text):
     def __init__(self, size):
@@ -65,9 +67,10 @@ class TileRevealer(ft.Container):
         self.door.update()
 
 class TileGame(ft.Container):
-    def __init__(self, image_paths, reload_func, debug_mode=False):
+    def __init__(self, image_paths, state_change_func, scorekeeper: dict, debug_mode=False):
         super().__init__()
-        self.reload_func = reload_func
+        self.state_change = state_change_func
+        self.scorekeeper = scorekeeper
         self.target_width = self.target_height = 85
         self.grid_width = (self.target_width * 6) + 65
         self.width = self.grid_width
@@ -115,6 +118,9 @@ class TileGame(ft.Container):
             await asyncio.sleep(1)
             if self.click_1_cache.data[2] == src_str:
                 await self.special_increment()
+                self.scorekeeper['current_match_count'] = self.match_count.count
+                self.scorekeeper['current_click_count'] = self.click_count.count
+                self.state_change()
                 if self.match_count.count == 18:
                     await asyncio.sleep(.5)
                     await self.win_screen()
@@ -123,6 +129,8 @@ class TileGame(ft.Container):
                 await close_func()
                 await self.click_1_cache.data[1]()
                 await self.click_count.increment()
+                self.scorekeeper['current_click_count'] = self.click_count.count
+                self.state_change()
             self.click_1_cache = None
             self.click_2_cache = None
         else:
@@ -134,7 +142,7 @@ class TileGame(ft.Container):
                                   animate_opacity=ft.Animation(800, ft.AnimationCurve.EASE_IN), opacity=0,
                                   alignment=ft.Alignment.CENTER)
         win_text = ft.Text('You win!', text_align=ft.TextAlign.CENTER, size=self.target_width)
-        play_again_button = ft.Button('Play again', color='blue', on_click=self.reload_game)
+        play_again_button = ft.Button('Next Level', color='blue', on_click=self.state_change)
 
         win_screen.content=ft.Column(horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                                      alignment=ft.MainAxisAlignment.CENTER, controls=[
@@ -148,11 +156,6 @@ class TileGame(ft.Container):
         win_screen.opacity = 1
         self.page.update()
 
-    async def reload_game(self):
-        self.page.controls.clear()
-        self.page.overlay.clear()
-        self.page.add(self.reload_func()) #reload game
-
     async def special_increment(self):
         self.click_count.count += 1
         self.match_count.count += 1
@@ -165,3 +168,41 @@ class TileGame(ft.Container):
         self.click_count.opacity = 1
         self.match_count.opacity = 1
         self.text_row.update()
+
+class NewGame:
+    def __init__(self, page: ft.Page, max_level=52):
+        self.page = page
+        self.session_id = uuid.uuid1()
+        self.timestamp = self.session_id.time
+        self.max_level = max_level
+
+        self.scorekeeper = {
+            'current_level' : 1,
+            'score' : 0,
+            'current_click_count' : 0,
+            'current_match_count' : 0,
+            'current_level_complete' : False
+        }
+
+        self.current_level = self.scorekeeper['current_level']
+        self.score = self.scorekeeper['score']
+        self.current_click_count = self.scorekeeper['current_click_count']
+        self.current_match_count = self.scorekeeper['current_match_count']
+        self.current_level_complete = self.scorekeeper['current_level_complete']
+        self.current_game = None
+        self.load_level()
+
+    def load_level(self):
+        images = [f'/new_levels/level_{self.current_level}/icon{i}.png' for i in range(18)]
+        self.current_game = TileGame(image_paths=images, state_change_func=self.state_change, scorekeeper=self.scorekeeper)
+
+    def read_scorekeeper(self):
+        self.current_level = self.scorekeeper['current_level']
+        self.score = self.scorekeeper['score']
+        self.current_click_count = self.scorekeeper['current_click_count']
+        self.current_match_count = self.scorekeeper['current_match_count']
+        self.current_level_complete = self.scorekeeper['current_level_complete']
+
+    def state_change(self):
+        self.read_scorekeeper()
+        print(f'{self.current_level=}\n{self.score=}\n{self.current_click_count=}\n{self.current_match_count=}\n{self.current_level_complete=}')
