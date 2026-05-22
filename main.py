@@ -13,13 +13,7 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.add(ft.Column(controls=[
-                            ft.Text(f'Current Level: {new_game.current_level}'),
-                            new_game.current_game
-                        ],
-                        alignment = ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                        )
+    new_game.load_level()
 
 
 ft.run(main, assets_dir='assets')

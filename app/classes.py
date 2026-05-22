@@ -189,25 +189,36 @@ class NewGame:
         }
 
         self.current_level = self.scorekeeper['current_level']
+        self.level_label = f'Current Level: {self.current_level}'
         self.score = self.scorekeeper['score']
         self.current_click_count = self.scorekeeper['current_click_count']
         self.current_match_count = self.scorekeeper['current_match_count']
         self.current_level_complete = self.scorekeeper['current_level_complete']
         self.current_game = None
-        self.load_level()
+        self.create_level()
 
-    def load_level(self):
+    def create_level(self):
         images = [f'/new_levels/level_{self.current_level}/icon{i}.png' for i in range(18)]
         self.current_game = TileGame(image_paths=images, state_change_func=self.state_change, scorekeeper=self.scorekeeper)
 
     def next_level(self):
         self.current_level_complete = self.scorekeeper['current_level_complete'] = False
         self.current_level = self.scorekeeper['current_level'] = self.current_level + 1
+        self.level_label = f'Current Level: {self.current_level}'
+        self.create_level()
         self.load_level()
 
-        self.page.controls.pop()
-        self.page.controls.append(self.current_game)
-
+    def load_level(self):
+        self.page.overlay.clear()
+        self.page.clean()
+        self.page.add(
+            ft.Column(controls=[
+                            ft.Text(self.level_label),
+                            self.current_game
+                            ],
+                        alignment = ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                        )
         self.page.update()
 
     def read_scorekeeper(self):
