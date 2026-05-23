@@ -2,6 +2,8 @@ import flet as ft
 import asyncio
 import random
 import uuid
+from pathlib import Path
+import statistics
 import time
 
 class TextCounter(ft.Text):
@@ -189,6 +191,8 @@ class NewGame:
         }
 
         self.current_level = self.scorekeeper['current_level']
+        self.level_similarity = float()
+        self.par = 0
         self.level_label = f'Current Level: {self.current_level}'
         self.score = self.scorekeeper['score']
         self.current_click_count = self.scorekeeper['current_click_count']
@@ -196,9 +200,16 @@ class NewGame:
         self.current_level_complete = self.scorekeeper['current_level_complete']
         self.current_game = None
         self.create_level()
+        self.calculate_par()
+        self.process_score()
 
     def create_level(self):
-        images = [f'/new_levels/level_{self.current_level}/icon{i}.png' for i in range(18)]
+        level_folder = f'/new_levels/level_{self.current_level}'
+        images = [f'{level_folder}/icon{i}.png' for i in range(18)]
+        info_path = Path.cwd() / 'assets' / 'new_levels' / f'level_{self.current_level}' / 'similarity.txt'
+        with open(info_path, 'r') as info_file:
+            self.level_similarity = float(info_file.read())
+        self.calculate_par()
         self.current_game = TileGame(image_paths=images, state_change_func=self.state_change, scorekeeper=self.scorekeeper)
 
     def next_level(self):
@@ -213,7 +224,7 @@ class NewGame:
         self.page.clean()
         self.page.add(
             ft.Column(controls=[
-                            ft.Text(self.level_label),
+                            ft.Text(f'{self.level_label}   -   {self.level_similarity}  -   Par: {self.par}'),
                             self.current_game
                             ],
                         alignment = ft.MainAxisAlignment.CENTER,
@@ -227,6 +238,28 @@ class NewGame:
         self.current_click_count = self.scorekeeper['current_click_count']
         self.current_match_count = self.scorekeeper['current_match_count']
         self.current_level_complete = self.scorekeeper['current_level_complete']
+
+    def calculate_par(self):
+        if self.level_similarity <= 0.65:
+            self.par = int(37 + (self.level_similarity - 0.34816479682922363) * 16.56)
+        else:
+            self.par = int(42 + (self.level_similarity - 0.65) * 38.46)
+
+    def process_score(self):
+        data = []
+        for i in range(1, 53):
+            info_path = Path.cwd() / 'assets' / 'new_levels' / f'level_{i}' / 'similarity.txt'
+            with open(info_path, 'r') as info_file:
+                avg = float(info_file.read())
+                data.append(avg)
+            data.sort()
+        print("Min:", min(data))  # Output: 1
+        print("Mean:", statistics.mean(data))  # Output: 4
+        print("Median:", statistics.median(data))  # Output: 3
+        print("Mode:", statistics.mode(data))  # Output: 2
+        print("Max:", max(data))  # Output: 5
+
+
 
     def state_change(self):
         self.read_scorekeeper()
