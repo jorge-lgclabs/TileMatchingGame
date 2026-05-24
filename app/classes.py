@@ -241,9 +241,9 @@ class NewGame:
 
     def calculate_par(self):
         if self.level_similarity <= 0.65:
-            self.par = int(37 + (self.level_similarity - 0.34816479682922363) * 16.56)
+            self.par = int(40 + (self.level_similarity - 0.34816479682922363) * 6.62)
         else:
-            self.par = int(42 + (self.level_similarity - 0.65) * 38.46)
+            self.par = int(42 + (self.level_similarity - 0.65) * 166.67)
 
     def process_score(self):
         data = []
